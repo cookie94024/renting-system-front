@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import "../styles/Calendar.scss";
 import Head from "next/head";
 import Layout from "../components/layout";
 import { QueryClientProvider, QueryClient } from "react-query";
