@@ -2,7 +2,7 @@ import { useQuery } from "react-query";
 import { Item, Order, Product } from "../types";
 import { api } from "../api";
 import { API_BASE } from "../constants";
-import { getImageUrl } from "../utils";
+import { getImageUrl, getTotalPrice } from "../utils";
 import { uniq } from "lodash";
 
 interface Props {
@@ -35,15 +35,6 @@ export default function OrderBlock({ order }: Props) {
         productIds.includes(product.id)
       );
 
-      const totalPriceResponse = await api().post(
-        API_BASE + "/api/order/list_order_cost/",
-        {
-          id: order.id,
-        }
-      );
-
-      const totalPrice = totalPriceResponse.data.all_cost as number;
-
       return {
         products: products.map((product) => {
           const itemsForThisProduct = items.filter(
@@ -54,7 +45,6 @@ export default function OrderBlock({ order }: Props) {
             product_count: itemsForThisProduct.length,
           };
         }),
-        totalPrice,
       };
     },
     {
@@ -64,7 +54,7 @@ export default function OrderBlock({ order }: Props) {
 
   if (!data) return null;
 
-  const { products, totalPrice } = data;
+  const { products } = data;
 
   return (
     <div className="w-full shadow sm:overflow-hidden sm:rounded-md bg-white px-4 py-5 sm:p-6">
@@ -102,7 +92,14 @@ export default function OrderBlock({ order }: Props) {
           </li>
         ))}
       <div className="border-t flex justify-end gap-2 pt-5">
-        訂單金額 : <span className="font-bold text-3xl">${totalPrice}</span>
+        {products && (
+          <>
+            訂單金額 :{" "}
+            <span className="font-bold text-3xl">
+              ${getTotalPrice(products)}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

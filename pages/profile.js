@@ -1,7 +1,7 @@
 export default function Example() {
-  const { data: userData } = useQuery(["user"], async () => {
-    return "testing";
-  });
+  // const { data: userData } = useQuery(["user"], async () => {
+  //   return "testing";
+  // });
 
   return (
     <>

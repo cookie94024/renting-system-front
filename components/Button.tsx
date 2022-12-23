@@ -2,7 +2,7 @@ import classNames from "classnames";
 import React from "react";
 
 interface Props {
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   disabled?: boolean;
   isLoading?: boolean;
   value: string;

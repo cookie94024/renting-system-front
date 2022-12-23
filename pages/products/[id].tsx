@@ -8,20 +8,65 @@ import styles from "../../styles/ProductDescription.module.scss";
 import useCartStore from "../../stores/useCartStore";
 import useUserStore from "../../stores/useUserStore";
 import { Item, Product } from "../../types";
-import { useQuery } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import { api } from "../../api";
+import Button from "../../components/Button";
+import Modal from "../../components/Modal";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function ProductPage({ productData }: { productData: Product }) {
-  const addProductToCart = useCartStore((state) => state.addProductToCart);
   const user = useUserStore((state) => state.user);
-  const handleAddToCart = (e) => {
+
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addProductToCart({ productId: productData.id, memberId: user.id });
+    addProductToCartMutation.mutate();
   };
+
+  const [status, setStatus] = useState<"success" | "error" | "idle">("idle");
+
+  const addProductToCartMutation = useMutation(
+    async () => {
+      const cartsResponse = await api().post(
+        API_BASE + "/api/cart/list_cart_by_member/",
+        {
+          member: [user.id],
+        }
+      );
+
+      const carts = cartsResponse.data;
+
+      const alreadyExistedCart = carts.find(
+        (cart) => cart.product === productData.id
+      );
+
+      if (alreadyExistedCart) {
+        await api().patch(
+          API_BASE + "/api/cart/" + alreadyExistedCart.id + "/",
+          {
+            product_count: alreadyExistedCart.product_count + 1,
+            product: alreadyExistedCart.product,
+          }
+        );
+      } else {
+        await api().post(API_BASE + "/api/cart/", {
+          product_count: 1,
+          member: user.id,
+          product: productData.id,
+        });
+      }
+    },
+    {
+      onSuccess: () => {
+        setStatus("success");
+      },
+      onError: () => {
+        setStatus("error");
+      },
+    }
+  );
 
   const { data: productItems } = useQuery(
     [productData.id, "item"],
@@ -33,6 +78,10 @@ export default function ProductPage({ productData }: { productData: Product }) {
       );
 
       return response.data as Item[];
+    },
+    {
+      enabled: Boolean(user),
+      cacheTime: 0,
     }
   );
 
@@ -101,10 +150,12 @@ export default function ProductPage({ productData }: { productData: Product }) {
               ${productData.product_price}
             </p>
 
-            <div className="mt-5 text-gray-500">
-              目前庫存:{" "}
-              <span className="font-bold">{productItems?.length}</span>
-            </div>
+            {user && (
+              <div className="mt-5 text-gray-500">
+                目前庫存:{" "}
+                <span className="font-bold">{productItems?.length}</span>
+              </div>
+            )}
 
             <form className="mt-10">
               {/* Sizes */}
@@ -142,12 +193,14 @@ export default function ProductPage({ productData }: { productData: Product }) {
                 </RadioGroup>
               </div>
 
-              <button
-                onClick={handleAddToCart}
-                className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 py-3 px-8 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Add to Cart
-              </button>
+              <div className="mt-10">
+                <Button
+                  onClick={handleAddToCart}
+                  value={user ? "加入購物車" : "登入後才能使用"}
+                  isLoading={addProductToCartMutation.isLoading}
+                  disabled={!user || addProductToCartMutation.isLoading}
+                />
+              </div>
             </form>
           </div>
 
@@ -166,6 +219,24 @@ export default function ProductPage({ productData }: { productData: Product }) {
           </div>
         </div>
       </div>
+      <Modal
+        open={status === "success"}
+        onClose={() => setStatus("idle")}
+        type="success"
+        title="成功加入購物車"
+        message=""
+        buttonLink="/products"
+        buttonText="回到商品列表"
+      />
+      <Modal
+        open={status === "error"}
+        onClose={() => setStatus("idle")}
+        type="error"
+        title="加入失敗"
+        message="此商品目前沒有庫存囉！"
+        buttonLink="/products"
+        buttonText="查看其他商品"
+      />
     </div>
   );
 }

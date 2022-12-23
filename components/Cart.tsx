@@ -7,8 +7,10 @@ import { api } from "../api";
 import { API_BASE } from "../constants";
 import useUserStore from "../stores/useUserStore";
 import { getImageUrl, getTotalPrice } from "../utils";
-import useProductsInCart from "../hooks/useProductsInCart";
-import Link from "next/link";
+import useProductsInCart, {
+  ProductWithCountAndCartId,
+} from "../hooks/useProductsInCart";
+import { remove } from "lodash";
 
 export default function Cart() {
   const userData = useUserStore((state) => state.user);
@@ -16,37 +18,24 @@ export default function Cart() {
   const isCartOpen = useCartStore((state) => state.isCartOpen);
   const closeCart = useCartStore((state) => state.closeCart);
 
-  const {
-    data: products,
-    isLoading,
-    refetch,
-  } = useProductsInCart({
+  const [products, setProducts] = useState<ProductWithCountAndCartId[]>([]);
+
+  const { isLoading, refetch } = useProductsInCart({
     enabled: isCartOpen && Boolean(userData),
+    onSuccess: (data) => {
+      setProducts(data);
+    },
   });
 
-  const clearCartMutation = useMutation(
-    async () => {
-      await api().post(API_BASE + "/api/cart/clear_cart/", {
-        member_id: userData.id,
-      });
-    },
-    {
-      onSuccess: () => {
-        refetch();
-      },
-    }
-  );
+  const clearCartMutation = useMutation(async () => {
+    await api().post(API_BASE + "/api/cart/clear_cart/", {
+      member_id: userData.id,
+    });
+  });
 
-  const deleteACardMutation = useMutation(
-    async (cartId) => {
-      await api().delete(API_BASE + "/api/cart/" + cartId + "/");
-    },
-    {
-      onSuccess: () => {
-        refetch();
-      },
-    }
-  );
+  const deleteACardMutation = useMutation(async (cartId: string) => {
+    await api().delete(API_BASE + "/api/cart/" + cartId + "/");
+  });
 
   return (
     <Transition.Root show={isCartOpen} as={Fragment}>
@@ -133,10 +122,15 @@ export default function Cart() {
                                       <div className="flex">
                                         <button
                                           onClick={() => {
+                                            const filteredProduct =
+                                              products.filter(
+                                                (data) => data.id !== product.id
+                                              );
+                                            setProducts(filteredProduct);
+
                                             deleteACardMutation.mutate(
                                               product.cart_id
                                             );
-                                            refetch();
                                           }}
                                           type="button"
                                           className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -156,7 +150,10 @@ export default function Cart() {
 
                     <div className="flex justify-end">
                       <button
-                        onClick={() => clearCartMutation.mutate()}
+                        onClick={() => {
+                          setProducts([]);
+                          clearCartMutation.mutate();
+                        }}
                         className="font-medium text-indigo-600 hover:text-indigo-500 mb-6 px-4 sm:px-6"
                       >
                         清空購物車

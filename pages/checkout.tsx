@@ -1,7 +1,7 @@
 import { Controller, useForm } from "react-hook-form";
 import useProductsInCart from "../hooks/useProductsInCart";
 import useUserStore from "../stores/useUserStore";
-import { getImageUrl } from "../utils";
+import { getImageUrl, getTotalPrice } from "../utils";
 import { useMutation } from "react-query";
 import { api } from "../api";
 import { API_BASE } from "../constants";
@@ -112,7 +112,7 @@ export default function checkoutPage() {
                         <div>
                           <div className="flex justify-between text-base font-medium text-gray-900">
                             <h3>
-                              <a href={product.href}>{product.product_name}</a>
+                              <a>{product.product_name}</a>
                             </h3>
                             <p className="ml-4">${product.product_price}</p>
                           </div>
@@ -287,7 +287,11 @@ export default function checkoutPage() {
               <div className="mt-6 border-b py-2" />
               <div className="mt-6 flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-900">總計</p>
-                <p className="text-2xl font-semibold text-gray-900">$408.00</p>
+                {products && (
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ${getTotalPrice(products)}
+                  </p>
+                )}
               </div>
             </div>
             <div className="pt-5">

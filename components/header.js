@@ -10,7 +10,7 @@ import useCartStore from "../stores/useCartStore";
 const Nav = [
   { name: "Home", href: "/", current: false },
   { name: "About", href: "/about", current: false },
-  { name: "Productss", href: "/products", current: false },
+  { name: "Products", href: "/products", current: false },
   { name: "Search", href: "#", current: false },
 ];
 
@@ -34,11 +34,13 @@ export default function Header() {
             <div className="relative flex h-16 items-center justify-between">
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center">
-                  <img
-                    className="hidden h-10 w-auto lg:block"
-                    src="https://upload.wikimedia.org/wikipedia/commons/3/3a/NCULogo.svg"
-                    alt="Your Company"
-                  />
+                  <Link href="/">
+                    <img
+                      className="hidden h-10 w-auto lg:block"
+                      src="https://upload.wikimedia.org/wikipedia/commons/3/3a/NCULogo.svg"
+                      alt="Your Company"
+                    />
+                  </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-4">
@@ -127,7 +129,7 @@ export default function Header() {
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       {isUserLoggedIn ? (
                         <>
-                          <Menu.Item>
+                          {/* <Menu.Item>
                             {({ active }) => (
                               <Link
                                 href="/profile"
@@ -139,7 +141,7 @@ export default function Header() {
                                 個人資訊
                               </Link>
                             )}
-                          </Menu.Item>
+                          </Menu.Item> */}
                           <Menu.Item>
                             {({ active }) => (
                               <Link

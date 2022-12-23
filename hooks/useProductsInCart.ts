@@ -6,9 +6,20 @@ import { Product } from "../types";
 
 interface Param {
   enabled: boolean;
+  onSuccess?: (data: ProductWithCountAndCartId[]) => void;
+  onError?: () => void;
 }
 
-export default function useProductsInCart({ enabled }: Param) {
+export type ProductWithCountAndCartId = Product & {
+  product_count: number;
+  cart_id: string;
+};
+
+export default function useProductsInCart({
+  enabled,
+  onSuccess,
+  onError,
+}: Param) {
   const userData = useUserStore((state) => state.user)!;
 
   const {
@@ -52,6 +63,8 @@ export default function useProductsInCart({ enabled }: Param) {
       return productsDataWithProductCountAndCardId;
     },
     {
+      onSuccess,
+      onError,
       cacheTime: 0,
       enabled,
     }
