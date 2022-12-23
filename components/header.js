@@ -5,6 +5,7 @@ import Image from "next/image";
 import shoppingcart from "../components/shoppingcart";
 import useUserStore from "../stores/useUserStore";
 import { useRouter } from "next/router";
+import useCartStore from "../stores/useCartStore";
 
 const Nav = [
   { name: "Home", href: "/", current: false },
@@ -20,6 +21,7 @@ function classNames(...classes) {
 export default function Header() {
   const userToken = useUserStore((state) => state.token);
   const removeToken = useUserStore((state) => state.removeToken);
+  const openCart = useCartStore((state) => state.openCart);
   const router = useRouter();
 
   const isUserLoggedIn = !!userToken;
@@ -61,7 +63,7 @@ export default function Header() {
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                 {/* Profile dropdown */}
                 <Menu as="div" className="relative ml-3">
-                  <div>
+                  <div className="flex gap-5">
                     <Menu.Button className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open user menu</span>
                       <div className="w-8 h-8 flex justify-center items-center">
@@ -88,6 +90,30 @@ export default function Header() {
                         )}
                       </div>
                     </Menu.Button>
+                    {isUserLoggedIn && (
+                      <button
+                        onClick={openCart}
+                        className="flex rounded-full text-sm"
+                      >
+                        <span className="sr-only">Open cart</span>
+                        <div className="w-8 h-8 flex justify-center items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-6 h-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                    )}
                   </div>
                   <Transition
                     as={Fragment}
@@ -100,23 +126,51 @@ export default function Header() {
                   >
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       {isUserLoggedIn ? (
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              onClick={() => {
-                                window.localStorage.removeItem("token");
-                                removeToken();
-                                router.reload(window.location.pathname);
-                              }}
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-gray-700 cursor-pointer"
-                              )}
-                            >
-                              Sign out
-                            </a>
-                          )}
-                        </Menu.Item>
+                        <>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link
+                                href="/profile"
+                                className={classNames(
+                                  active ? "bg-gray-100" : "",
+                                  "block px-4 py-2 text-sm text-gray-700 cursor-pointer"
+                                )}
+                              >
+                                個人資訊
+                              </Link>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link
+                                href="/orders"
+                                className={classNames(
+                                  active ? "bg-gray-100" : "",
+                                  "block px-4 py-2 text-sm text-gray-700 cursor-pointer"
+                                )}
+                              >
+                                訂單訊息
+                              </Link>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                onClick={() => {
+                                  window.localStorage.removeItem("token");
+                                  removeToken();
+                                  router.reload(window.location.pathname);
+                                }}
+                                className={classNames(
+                                  active ? "bg-gray-100" : "",
+                                  "block px-4 py-2 text-sm text-gray-700 cursor-pointer"
+                                )}
+                              >
+                                登出
+                              </a>
+                            )}
+                          </Menu.Item>
+                        </>
                       ) : (
                         <Menu.Item>
                           {({ active }) => (
@@ -127,7 +181,7 @@ export default function Header() {
                                 "block px-4 py-2 text-sm text-gray-700"
                               )}
                             >
-                              Sign in
+                              登入
                             </Link>
                           )}
                         </Menu.Item>

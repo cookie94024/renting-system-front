@@ -263,7 +263,14 @@ export default function RegisterPage() {
           <div className="border-t border-gray-200" />
         </div>
       </div>
-      <Modal open={registerSuccess === "success"} onClose={handleModalClose} />
+      <Modal
+        open={registerSuccess === "success"}
+        onClose={handleModalClose}
+        title="註冊帳號成功"
+        message="現在你可以在這個網站租借衣服囉！"
+        buttonText="回到登入頁面"
+        buttonLink="/login"
+      />
     </>
   );
 }

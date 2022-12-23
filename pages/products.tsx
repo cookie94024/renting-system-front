@@ -2,12 +2,14 @@ import axios from "axios";
 import Link from "next/link";
 import { useState } from "react";
 import ProductFilter from "../components/ProductFilter";
-import { API_BASE, DEFAULT_IMAGE } from "../constants";
+import { API_BASE, MEDIA_BASE } from "../constants";
+import { Product } from "../types";
+import { useQuery } from "react-query";
 
-export default function Products({ products }) {
+export default function Products({ products }: { products: Product[] }) {
   const [currentType, setCurrentType] = useState(0);
 
-  const handleChangeType = (id) => {
+  const handleChangeType = (id: number) => {
     setCurrentType(id);
   };
 
@@ -31,7 +33,7 @@ export default function Products({ products }) {
             <div key={product.id} className="group relative">
               <div className="min-h-80 aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 group-hover:opacity-75 lg:aspect-none lg:h-80">
                 <img
-                  src={DEFAULT_IMAGE}
+                  src={`${MEDIA_BASE}${product.product_image}`}
                   alt="product image"
                   className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                 />

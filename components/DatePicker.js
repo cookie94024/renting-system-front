@@ -1,4 +1,3 @@
-import { useQuery } from "react-query";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import axios from "axios";
