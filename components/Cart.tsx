@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import useCartStore from "../stores/useCartStore";
 import { api } from "../api";
@@ -10,7 +10,147 @@ import { getImageUrl, getTotalPrice } from "../utils";
 import useProductsInCart, {
   ProductWithCountAndCartId,
 } from "../hooks/useProductsInCart";
-import { remove } from "lodash";
+import { Item } from "../types";
+import classNames from "classnames";
+
+function ProductBlock({
+  product,
+  onDelete,
+}: {
+  product: ProductWithCountAndCartId;
+  onDelete: () => void;
+}) {
+  const userData = useUserStore((state) => state.user);
+
+  const [currentProductCount, serCurrentProductCount] = useState<number>(
+    product.product_count
+  );
+
+  const { data: productItemCount } = useQuery(
+    [product.id, "item"],
+    async () => {
+      const response = await api().get(
+        API_BASE + "/api/item/list_item_by_product/?product_id=" + product.id
+      );
+
+      const productItems = response.data as Item[];
+
+      const filteredItems = productItems.filter(
+        (item) => item.item_status === "0"
+      );
+
+      return filteredItems.length;
+    },
+    {
+      cacheTime: 0,
+    }
+  );
+
+  const modifyProductToCartMutation = useMutation(
+    async (type: "add" | "minus") => {
+      const cartsResponse = await api().post(
+        API_BASE + "/api/cart/list_cart_by_member/",
+        {
+          member: [userData.id],
+        }
+      );
+
+      const carts = cartsResponse.data;
+
+      const alreadyExistedCart = carts.find(
+        (cart) => cart.product === product.id
+      );
+
+      if (alreadyExistedCart) {
+        serCurrentProductCount((count) => {
+          if (type === "add") {
+            return count + 1;
+          } else {
+            return count - 1;
+          }
+        });
+
+        await api().patch(
+          API_BASE + "/api/cart/" + alreadyExistedCart.id + "/",
+          {
+            product_count:
+              type === "add"
+                ? alreadyExistedCart.product_count + 1
+                : alreadyExistedCart.product_count - 1,
+            product: alreadyExistedCart.product,
+          }
+        );
+      }
+    }
+  );
+
+  return (
+    <li key={product.id} className="flex py-6">
+      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+        <img
+          src={getImageUrl(product.product_image)}
+          alt="product image"
+          className="h-full w-full object-cover object-center"
+        />
+      </div>
+
+      <div className="ml-4 flex flex-1 flex-col">
+        <div>
+          <div className="flex justify-between text-base font-medium text-gray-900">
+            <h3>
+              <a>{product.product_name}</a>
+            </h3>
+            <p className="ml-4">${product.product_price}</p>
+          </div>
+          <p className="mt-1 text-sm text-gray-500">
+            尺寸: {product.product_size}
+          </p>
+        </div>
+        <div className="flex flex-1 items-end justify-between text-sm">
+          <div className="flex items-center gap-2">
+            {currentProductCount > 1 && (
+              <button
+                className={classNames("text-indigo-600", {
+                  "text-gray-200": modifyProductToCartMutation.isLoading,
+                })}
+                disabled={modifyProductToCartMutation.isLoading}
+                onClick={() => {
+                  modifyProductToCartMutation.mutate("minus");
+                }}
+              >
+                -
+              </button>
+            )}
+            <p className="text-gray-500">數量: {currentProductCount}</p>
+            {currentProductCount < productItemCount && (
+              <button
+                className={classNames("text-indigo-600", {
+                  "text-gray-200": modifyProductToCartMutation.isLoading,
+                })}
+                disabled={modifyProductToCartMutation.isLoading}
+                onClick={() => {
+                  modifyProductToCartMutation.mutate("add");
+                }}
+              >
+                +
+              </button>
+            )}
+          </div>
+
+          <div className="flex">
+            <button
+              onClick={onDelete}
+              type="button"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              刪除
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
 
 export default function Cart() {
   const userData = useUserStore((state) => state.user);
@@ -20,7 +160,7 @@ export default function Cart() {
 
   const [products, setProducts] = useState<ProductWithCountAndCartId[]>([]);
 
-  const { isLoading, refetch } = useProductsInCart({
+  const { isLoading } = useProductsInCart({
     enabled: isCartOpen && Boolean(userData),
     onSuccess: (data) => {
       setProducts(data);
@@ -91,56 +231,18 @@ export default function Cart() {
                               className="-my-6 divide-y divide-gray-200"
                             >
                               {products.map((product) => (
-                                <li key={product.id} className="flex py-6">
-                                  <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                                    <img
-                                      src={getImageUrl(product.product_image)}
-                                      alt="product image"
-                                      className="h-full w-full object-cover object-center"
-                                    />
-                                  </div>
+                                <ProductBlock
+                                  key={product.id}
+                                  product={product}
+                                  onDelete={() => {
+                                    const filteredProduct = products.filter(
+                                      (data) => data.id !== product.id
+                                    );
+                                    setProducts(filteredProduct);
 
-                                  <div className="ml-4 flex flex-1 flex-col">
-                                    <div>
-                                      <div className="flex justify-between text-base font-medium text-gray-900">
-                                        <h3>
-                                          <a>{product.product_name}</a>
-                                        </h3>
-                                        <p className="ml-4">
-                                          ${product.product_price}
-                                        </p>
-                                      </div>
-                                      <p className="mt-1 text-sm text-gray-500">
-                                        尺寸: {product.product_size}
-                                      </p>
-                                    </div>
-                                    <div className="flex flex-1 items-end justify-between text-sm">
-                                      <p className="text-gray-500">
-                                        數量: {product.product_count}
-                                      </p>
-
-                                      <div className="flex">
-                                        <button
-                                          onClick={() => {
-                                            const filteredProduct =
-                                              products.filter(
-                                                (data) => data.id !== product.id
-                                              );
-                                            setProducts(filteredProduct);
-
-                                            deleteACardMutation.mutate(
-                                              product.cart_id
-                                            );
-                                          }}
-                                          type="button"
-                                          className="font-medium text-indigo-600 hover:text-indigo-500"
-                                        >
-                                          刪除
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </li>
+                                    deleteACardMutation.mutate(product.cart_id);
+                                  }}
+                                />
                               ))}
                             </ul>
                           )}

@@ -1,4 +1,5 @@
 import { Controller, useForm } from "react-hook-form";
+import "react-calendar/dist/Calendar.css";
 import useProductsInCart from "../hooks/useProductsInCart";
 import useUserStore from "../stores/useUserStore";
 import { getImageUrl, getTotalPrice } from "../utils";
@@ -9,6 +10,8 @@ import Button from "../components/Button";
 import { addDays, format } from "date-fns";
 import { useState } from "react";
 import Modal from "../components/Modal";
+import classNames from "classnames";
+import DatePicker from "../components/DatePicker";
 
 type Transaction = {
   bank_id: string;
@@ -21,7 +24,9 @@ type Transaction = {
 export default function checkoutPage() {
   const userData = useUserStore((state) => state.user);
 
-  const { register, control, handleSubmit } = useForm<Transaction>({
+  const { register, control, handleSubmit } = useForm<
+    Transaction & { rent_datetime: string }
+  >({
     defaultValues: {
       card_type: "v",
     },
@@ -34,7 +39,7 @@ export default function checkoutPage() {
   };
 
   const submitMutation = useMutation(
-    async (data: Transaction) => {
+    async (data: Transaction & { rent_datetime: string }) => {
       const transactionResponse = await api().post(
         API_BASE + "/api/transaction/",
         {
@@ -54,7 +59,8 @@ export default function checkoutPage() {
         {
           member: userData.id,
           transaction: transaction.id,
-          rent_datetime: format(addDays(new Date(), 7), "yyyy-MM-dd"),
+          rent_datetime:
+            data.rent_datetime || format(addDays(new Date(), 7), "yyyy-MM-dd"),
         }
       );
 
@@ -206,6 +212,30 @@ export default function checkoutPage() {
             <p className="text-xl font-medium">付款資訊</p>
             <p className="text-gray-400">填寫付款資訊來完成您的訂單</p>
             <div>
+              <label
+                htmlFor="card-holder"
+                className="mt-4 mb-2 block text-sm font-medium"
+              >
+                開始租借日期
+              </label>
+              <div className="relative">
+                <Controller
+                  control={control}
+                  name="rent_datetime"
+                  render={({ field: { onChange, value } }) => (
+                    <div className="col-span-6 sm:col-span-6 lg:col-span-3 bg-white">
+                      <DatePicker
+                        minDate={new Date()}
+                        value={value ? new Date(value) : ""}
+                        onChange={(value) => {
+                          const date = new Date(value);
+                          onChange(format(value, "yyyy-MM-dd"));
+                        }}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
               <label
                 htmlFor="card-holder"
                 className="mt-4 mb-2 block text-sm font-medium"

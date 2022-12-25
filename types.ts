@@ -11,7 +11,7 @@ export type Order = {
 export type Item = {
   id: string;
   product: number;
-  status: "0" | "1" | "2" | "3";
+  item_status: "0" | "1" | "2" | "3";
 };
 
 export type Product = {

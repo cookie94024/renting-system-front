@@ -8,11 +8,13 @@ import { useRouter } from "next/router";
 import classNames from "classnames";
 import useUserStore from "../stores/useUserStore";
 import { useLayoutEffect } from "react";
+import { api } from "../api";
 
 export default function LoginPage() {
   const router = useRouter();
   const setToken = useUserStore((state) => state.setToken);
   const token = useUserStore((state) => state.token);
+  const setUser = useUserStore((state) => state.setUser);
 
   useLayoutEffect(() => {
     if (token) {
@@ -21,11 +23,22 @@ export default function LoginPage() {
   }, []);
 
   const mutation = useMutation(
-    (data) => axios.post(API_BASE + "/api/login/", data),
+    async (data) => {
+      const tokenData = await axios.post(API_BASE + "/api/login/", data);
+      const token = tokenData.data.token;
+      window.localStorage.setItem("token", token);
+      setToken(token);
+
+      const userResponse = await api().get(API_BASE + "/api/user/");
+      const userData = userResponse.data;
+
+      return {
+        userData,
+      };
+    },
     {
-      onSuccess: (data) => {
-        window.localStorage.setItem("token", data.data.token);
-        setToken(data.data.token);
+      onSuccess: ({ userData }) => {
+        setUser(userData);
         router.push("/");
       },
     }

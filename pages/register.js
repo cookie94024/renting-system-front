@@ -21,7 +21,7 @@ export default function RegisterPage() {
     setError,
   } = useForm({
     defaultValues: {
-      sex: "m",
+      sex: "0",
     },
   });
 
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       {...register("password2")}
-                      type="text"
+                      type="password"
                       className={classNames(inputClassName, {
                         [errorBorderClassName]: errors.password2,
                       })}
@@ -218,8 +218,9 @@ export default function RegisterPage() {
                       {...register("sex")}
                       className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                     >
-                      <option value="m">男性</option>
-                      <option value="f">女性</option>
+                      <option value="1">男性</option>
+                      <option value="0">女性</option>
+                      <option value="2">不選擇</option>
                     </select>
                     <span className="text-xs text-red-500">
                       {errors.sex?.message}

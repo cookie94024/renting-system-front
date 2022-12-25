@@ -1,11 +1,12 @@
 import create from "zustand";
 
-type User = {
+export type User = {
   id: number;
   member_addr: string;
   member_birth: string;
   member_name: string;
   member_sex: string;
+  member_phone: string;
   user: {
     id: string;
     username: string;

@@ -77,7 +77,13 @@ export default function ProductPage({ productData }: { productData: Product }) {
           productData.id
       );
 
-      return response.data as Item[];
+      const productItems = response.data as Item[];
+
+      const filteredItems = productItems.filter(
+        (item) => item.item_status === "0"
+      );
+
+      return filteredItems;
     },
     {
       enabled: Boolean(user),
