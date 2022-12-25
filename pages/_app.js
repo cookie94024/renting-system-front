@@ -2,7 +2,7 @@ import "../styles/globals.css";
 import "../styles/Calendar.scss";
 import Head from "next/head";
 import Layout from "../components/layout";
-import { QueryClientProvider, QueryClient } from "react-query";
+import { QueryClientProvider, QueryClient, useMutation } from "react-query";
 import { useEffect } from "react";
 import useUserStore from "../stores/useUserStore";
 import axios from "axios";
@@ -17,9 +17,13 @@ function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     const getUser = async (token) => {
-      const response = await api().get(API_BASE + "/api/user/");
-
-      setUser(response.data);
+      try {
+        const response = await api().get(API_BASE + "/api/user/");
+        setUser(response.data);
+      } catch (error) {
+        setToken(undefined);
+        window.localStorage.removeItem("token");
+      }
     };
 
     const userToken = window.localStorage.getItem("token");
