@@ -100,7 +100,9 @@ function ProductBlock({
             <h3>
               <a>{product.product_name}</a>
             </h3>
-            <p className="ml-4">${product.product_price}</p>
+            <p className="ml-4">
+              ${Number(product.product_price) * currentProductCount}
+            </p>
           </div>
           <p className="mt-1 text-sm text-gray-500">
             尺寸: {product.product_size}
