@@ -7,14 +7,16 @@ import { API_BASE } from "../constants";
 import { useRouter } from "next/router";
 import classNames from "classnames";
 import useUserStore from "../stores/useUserStore";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import { api } from "../api";
+import Modal from "../components/Modal";
 
 export default function LoginPage() {
   const router = useRouter();
   const setToken = useUserStore((state) => state.setToken);
   const token = useUserStore((state) => state.token);
   const setUser = useUserStore((state) => state.setUser);
+  const [shouldOpenModal, setShouldOpenModal] = useState(false);
 
   useLayoutEffect(() => {
     if (token) {
@@ -40,6 +42,9 @@ export default function LoginPage() {
       onSuccess: ({ userData }) => {
         setUser(userData);
         router.push("/");
+      },
+      onError: () => {
+        setShouldOpenModal(true);
       },
     }
   );
@@ -137,6 +142,15 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+      <Modal
+        open={shouldOpenModal}
+        onClose={() => setShouldOpenModal(false)}
+        type="error"
+        title="登入失敗"
+        message="請輸入正確的會員帳號密碼"
+        buttonText="重試"
+        buttonLink="/login"
+      />
     </>
   );
 }

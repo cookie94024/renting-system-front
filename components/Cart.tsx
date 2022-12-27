@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useMutation, useQuery } from "react-query";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -12,19 +12,31 @@ import useProductsInCart, {
 } from "../hooks/useProductsInCart";
 import { Item } from "../types";
 import classNames from "classnames";
+import { sum } from "lodash";
 
 function ProductBlock({
   product,
   onDelete,
+  setPriceMap,
 }: {
   product: ProductWithCountAndCartId;
   onDelete: () => void;
+  setPriceMap: any;
 }) {
   const userData = useUserStore((state) => state.user);
 
   const [currentProductCount, serCurrentProductCount] = useState<number>(
     product.product_count
   );
+
+  useEffect(() => {
+    setPriceMap((state) => {
+      return {
+        ...state,
+        [product.id]: Number(product.product_price) * currentProductCount,
+      };
+    });
+  }, [currentProductCount]);
 
   const { data: productItemCount } = useQuery(
     [product.id, "item"],
@@ -154,6 +166,10 @@ function ProductBlock({
   );
 }
 
+const getPriceFromPriceMap = (priceMap: Record<string, number>) => {
+  return sum(Object.values(priceMap));
+};
+
 export default function Cart() {
   const userData = useUserStore((state) => state.user);
 
@@ -161,6 +177,7 @@ export default function Cart() {
   const closeCart = useCartStore((state) => state.closeCart);
 
   const [products, setProducts] = useState<ProductWithCountAndCartId[]>([]);
+  const [priceMap, setPriceMap] = useState<Record<string, number>>({});
 
   const { isLoading } = useProductsInCart({
     enabled: isCartOpen && Boolean(userData),
@@ -169,15 +186,28 @@ export default function Cart() {
     },
   });
 
-  const clearCartMutation = useMutation(async () => {
-    await api().post(API_BASE + "/api/cart/clear_cart/", {
-      member_id: userData.id,
-    });
-  });
+  const clearCartMutation = useMutation(
+    async () => {
+      await api().post(API_BASE + "/api/cart/clear_cart/", {
+        member_id: userData.id,
+      });
+    },
+    {
+      onSuccess: () => {
+        setPriceMap({});
+      },
+    }
+  );
 
-  const deleteACardMutation = useMutation(async (cartId: string) => {
-    await api().delete(API_BASE + "/api/cart/" + cartId + "/");
-  });
+  const deleteACardMutation = useMutation(
+    async (cartId: string) => {
+      await api().delete(API_BASE + "/api/cart/" + cartId + "/");
+      return cartId;
+    },
+    {
+      onSuccess: (cartId) => {},
+    }
+  );
 
   return (
     <Transition.Root show={isCartOpen} as={Fragment}>
@@ -235,12 +265,19 @@ export default function Cart() {
                               {products.map((product) => (
                                 <ProductBlock
                                   key={product.id}
+                                  setPriceMap={setPriceMap}
                                   product={product}
                                   onDelete={() => {
                                     const filteredProduct = products.filter(
                                       (data) => data.id !== product.id
                                     );
                                     setProducts(filteredProduct);
+
+                                    setPriceMap((map) => {
+                                      const newMap = { ...map };
+                                      delete newMap[product.id];
+                                      return newMap;
+                                    });
 
                                     deleteACardMutation.mutate(product.cart_id);
                                   }}
@@ -267,7 +304,7 @@ export default function Cart() {
                     <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
                       <div className="flex justify-between text-base font-medium text-gray-900">
                         <p>總計</p>
-                        {products && <p>${getTotalPrice(products)}</p>}
+                        {products && <p>${getPriceFromPriceMap(priceMap)}</p>}
                       </div>
                       <div className="mt-6">
                         <a
