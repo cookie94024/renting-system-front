@@ -11,7 +11,6 @@ const Nav = [
   { name: "Home", href: "/", current: false },
   { name: "About", href: "/about", current: false },
   { name: "Products", href: "/products", current: false },
-  { name: "Search", href: "#", current: false },
 ];
 
 function classNames(...classes) {
